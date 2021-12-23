@@ -2,6 +2,7 @@ package com.example.maxisloginlogout;
 
 import android.app.DatePickerDialog;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -21,10 +22,12 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.NetworkResponse;
@@ -35,6 +38,11 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.google.android.material.navigation.NavigationView;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -48,6 +56,7 @@ import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -135,6 +144,8 @@ public class Home extends AppCompatActivity implements Result {
 
     static String myid;
 
+    private AdView mAdView;
+
 
 
 //    public Home(Result result) {
@@ -208,6 +219,23 @@ public class Home extends AppCompatActivity implements Result {
         OnClick();*/
         Button logOutButton = (Button) findViewById(R.id.logOutButton);
         Button infoBtn = (Button) findViewById(R.id.infobtn);
+
+        //for ad
+        MobileAds.initialize(this, new OnInitializationCompleteListener() {
+            @Override
+            public void onInitializationComplete(InitializationStatus initializationStatus) {
+            }
+        });
+
+        mAdView = findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
+        //end ad
+
+        //Refresh Start
+
+
+        // refresh End
 
         logOutButton.setOnClickListener(new View.OnClickListener() {
 
@@ -497,7 +525,7 @@ public class Home extends AppCompatActivity implements Result {
                 //onApiCallTenantSales(null);
                 mList.setVisibility(View.GONE);
 
-                onApiCallCreditCollection(null);
+                //onApiCallCreditCollection(null);
 
                 sd.setVisibility(View.VISIBLE);
                 mListDepo.setVisibility(View.VISIBLE);
@@ -518,6 +546,8 @@ public class Home extends AppCompatActivity implements Result {
                 invoDat=invoiceDate.getText().toString();
                 followdatSt=followEDate.getText().toString();
                 combineValuesSale(dropDownValue,finalarray);
+                cleartext();
+                onApiCallTenantSales(null);
             }
         });
 
@@ -530,6 +560,8 @@ public class Home extends AppCompatActivity implements Result {
                 depoDat=dDatEdit.getText().toString();
 
                 combineValuesDepo(dropDownValue,finalarray);
+                cleartext();
+                onApiCallCreditCollection(null);
             }
         });
 
@@ -560,9 +592,12 @@ public class Home extends AppCompatActivity implements Result {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_settings:
+            case R.id.action_refresh:
                 // User chose the "Settings" item, show the app settings UI...
-                Toast.makeText(this, "clicking on email", Toast.LENGTH_SHORT).show();
+              /*  onApiCallTenantSales(null);
+                onApiCallCreditCollection(null);
+                cleartext();*/
+                refresh();
                 return true;
 
             case R.id.tool_logout:
@@ -576,6 +611,23 @@ public class Home extends AppCompatActivity implements Result {
                 return super.onOptionsItemSelected(item);
 
         }
+    }
+
+    private void refresh() {
+
+        this.recreate();
+        finish();
+        overridePendingTransition(0, 0);
+        startActivity(getIntent());
+        overridePendingTransition(0, 0);
+    }
+
+    private void cleartext() {
+
+        invoiceNumber.getText().clear();
+        invoiceDate.getText().clear();
+        invoiceAmount.getText().clear();
+        followEDate.getText().clear();
     }
 
     void signOut() {
@@ -642,52 +694,6 @@ public class Home extends AppCompatActivity implements Result {
                     return params;
                 }
 
-               /* @Override
-                public void deliverError(VolleyError error) {
-                    super.deliverError(error);
-
-                    //Log.e(TAG, error.getMessage(), error);
-
-                    final int status = error.networkResponse.statusCode;
-                    // Handle 30x
-                    if (status == HttpURLConnection.HTTP_MOVED_PERM ||
-                            status == HttpURLConnection.HTTP_MOVED_TEMP ||
-                            status == HttpURLConnection.HTTP_SEE_OTHER) {
-                        final String location = error.networkResponse.headers.get("Location");
-                        if (BuildConfig.DEBUG) {
-                            //Log.d(TAG, "Location: " + location);
-                        }
-                        // TODO: create new request with new location
-                        // TODO: enqueue new request
-
-
-
-
-                        StringRequest stringRequest = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
-                            @Override
-                            public void onResponse(String response) {
-                                Log.i("VOLLEY", response);
-                            }
-                        }, new Response.ErrorListener() {
-                            @Override
-                            public void onErrorResponse(VolleyError error) {
-                                Log.e("VOLLEY", error.toString());
-                           }
-                        });
-                        requestQueue.add(stringRequest);
-                    }
-                }
-
-                @Override
-                public String getUrl() {
-                    String url = super.getUrl();
-
-                    if (!url.startsWith("http://") && !url.startsWith("https://")) {
-                        url = "http://" + url; // use http by default
-                    }
-
-                    return url;
-                }*/
 
                 @Override
                 protected Response<String> parseNetworkResponse(NetworkResponse response) {
@@ -1040,37 +1046,10 @@ public class Home extends AppCompatActivity implements Result {
 
         Log.i("data", designCsName.getResult().getResponse()[0].getId());
         String myid = designCsName.getResult().getStatus();
-        //Demo rp=design;
-
-
-//        if(design.getResult().getStatus().equals("SUCCESS")) {
-//           // openInsideActivity4(response);
-//        }
-
-        /*int h = design.getResult().getResponse().length;
-        EntityDropdown[] dropDownValue = new EntityDropdown[h];
-
-        for (int i = 0; i < design.getResult().getResponse().length; i++) {
-
-            dropDownValue[i] = new EntityDropdown();
-            dropDownValue[i].setName(design.getResult().getResponse()[i].getName());
-            dropDownValue[i].setId(design.getResult().getResponse()[i].getUserId());
-        }
-        ma.customers=dropDownValue;
-        ArrayAdapter<EntityDropdown> adapter = new SpinAdapter(this, android.R.layout.simple_spinner_item, dropDownValue );
-
-        //adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        Handler handler = new Handler(Looper.getMainLooper()) {
-            @Override
-            public void handleMessage(Message msg) {
-                // Any UI task, example
-                customer.setAdapter(adapter);
-            }
-        };
-        handler.sendEmptyMessage(1);*/
 
 
 
+//
         return response;
 
     }
@@ -1133,14 +1112,6 @@ public class Home extends AppCompatActivity implements Result {
         int h = design.getResult().getResponse().length;
          dropDownValue = new EntityDropdown[h];
 
-//        dropDownValue[0] = new EntityDropdown();
-//        dropDownValue[0].setName("hello");
-//        dropDownValue[0].setId("a");
-//        dropDownValue[0].setDropRef("a");
-//        dropDownValue[1] = new EntityDropdown();
-//        dropDownValue[1].setName("hello");
-//        dropDownValue[1].setId("a");
-//        dropDownValue[1].setDropRef("a");
         for (int i = 0; i < design.getResult().getResponse().length; i++) {
 
             dropDownValue[i] = new EntityDropdown();
@@ -1148,21 +1119,11 @@ public class Home extends AppCompatActivity implements Result {
             dropDownValue[i].setId(design.getResult().getResponse()[i].getUserId());
         }
 
-        //Demo rp=design;
-//        if(dropDownValue[0].getName().equals("bht02a01")) {
-//            // openInsideActivity4(response);
-//        }
-
-//        Type typeListOfDesignDrop = new TypeToken<DataHandle>(){}.getType();
-//        DataHandle designDrop = gson.fromJson(response, typeListOfDesign);
-//        ArrayList<ResponseArray> myList= new ArrayList<ResponseArray>();
-
-
-
         ArrayAdapter<EntityDropdown> adapter = new SpinAdapter(this, android.R.layout.simple_dropdown_item_1line, dropDownValue );
 
         //adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         Handler handler = new Handler(Looper.getMainLooper()) {
+            @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void handleMessage(Message msg) {
                 // Any UI task, example
@@ -1199,6 +1160,13 @@ public class Home extends AppCompatActivity implements Result {
 
                 finalarray = new EntityDropdown[1];  // Hard coded will change
                 finalarray[0]= new EntityDropdown("", "", "");
+               /* finalarray[1]= new EntityDropdown("", "", "");
+                finalarray[0].setName("select someone");
+                finalarray[0].setId("");// hard coded because only one ans,
+                */
+                // will change when needed.
+
+
                 for (int i = 0; i <viaArray.length ; i++) {
 
 
@@ -1251,7 +1219,37 @@ public class Home extends AppCompatActivity implements Result {
 
     public void changeSo(String soId){
 
-        ma.customer.setAdapter(new SpinAdapter(ma, android.R.layout.simple_dropdown_item_1line, ma.customers));
+        ArrayAdapter<EntityDropdown> adapter2nd = new SpinAdapter(this, android.R.layout.simple_dropdown_item_1line, ma.customers );
+        ma.customer.setAdapter(adapter2nd);
+
+        ma.customer.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+
+
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view,
+                                       int position, long id) {
+                // Here you get the current item (a User object) that is selected by its position
+                EntityDropdown user = adapter2nd.getItem(position);
+                // Here you can do the action you want to...
+                //Toast.makeText(this, "ID: " + user.getId() + "\nName: " + user.getName(), Toast.LENGTH_SHORT).show();
+
+
+                String dropDown2nd= user.getId();
+                Log.i("2nd",dropDown2nd);
+
+               /* if(dropDown2nd!=("")){
+                onSuccess.setVisibility(View.VISIBLE);} // to make the apps like website after
+                 selecting 2nd drop down every ui element will visible  */
+
+
+
+
+
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> adapter) {  }
+        });
 
 
     }
@@ -1273,6 +1271,7 @@ public class Home extends AppCompatActivity implements Result {
                 myList.add(property);
 
             }
+        Collections.reverse(myList);
 
 
         DataListAdapter adapter = new DataListAdapter(this, R.layout.sale_listview, myList );
@@ -1328,6 +1327,8 @@ public class Home extends AppCompatActivity implements Result {
             myList.add(property);
 
         }
+
+        Collections.reverse(myList);
 
 
         DataListAdapterDeposit adapter = new DataListAdapterDeposit(this, R.layout.deposit_listview, myList );
@@ -1626,89 +1627,5 @@ public class Home extends AppCompatActivity implements Result {
         return response;
     }
 
-    //@Override
-   /* public void success(String Result, String source) {
-        String data = Result;
 
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        Type typeListOfDesign = new TypeToken<DataHandle>() {
-        }.getType();
-        DataHandle design = gson.fromJson(data, typeListOfDesign);
-
-
-        Log.i("test", design.getResult().getResponse()[0].getName());
-
-        int h = design.getResult().getResponse().length;
-        EntityDropdown[] dropDownValue = new EntityDropdown[h];
-
-//        dropDownValue[0] = new EntityDropdown();
-//        dropDownValue[0].setName("hello");
-//        dropDownValue[0].setId("a");
-//        dropDownValue[1] = new EntityDropdown();
-//        dropDownValue[1].setName("hello");
-//        dropDownValue[1].setId("a");
-        for (int i = 0; i < design.getResult().getResponse().length; i++) {
-
-            dropDownValue[i] = new EntityDropdown();
-            dropDownValue[i].setName(design.getResult().getResponse()[i].getName());
-            dropDownValue[i].setId(design.getResult().getResponse()[i].getUserId());
-        }
-
-        //Demo rp=design;
-//        if(dropDownValue[0].getName().equals("bht02a01")) {
-//            // openInsideActivity4(response);
-//        }
-
-//        Type typeListOfDesignDrop = new TypeToken<DataHandle>(){}.getType();
-//        DataHandle designDrop = gson.fromJson(response, typeListOfDesign);
-//        ArrayList<ResponseArray> myList= new ArrayList<ResponseArray>();
-
-
-        ArrayAdapter<EntityDropdown> adapter = new SpinAdapter(this, android.R.layout.simple_spinner_item, dropDownValue);
-
-        //adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-         salesOfficer
-                = (Spinner) findViewById(R.id.spinner);
-
-        salesOfficer.setAdapter(adapter);
-
-
-        salesOfficer.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-
-
-            @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view,
-                                       int position, long id) {
-                // Here you get the current item (a User object) that is selected by its position
-                EntityDropdown user = adapter.getItem(position);
-                // Here you can do the action you want to...
-                //Toast.makeText(this, "ID: " + user.getId() + "\nName: " + user.getName(), Toast.LENGTH_SHORT).show();
-
-
-                String dropDownId = user.getId();
-                Log.i("data", dropDownId);
-
-                for (int i = 0; i < designCredit.getCreditSales().length; i++) {
-
-
-                }
-
-                //objectCom.getObject(dropDownId,entityDropdowns,entityDropdowns2,entityDropdowns3);
-                //dropDown1.setVisibility(View.GONE);
-                //entityDropdowns2=objectCom.getdata();
-
-
-//                DropDownAdapter adapter1 = new DropDownAdapter(mContext, android.R.layout.simple_spinner_item, entityDropdowns3,1);
-//                adapter1.notifyDataSetChanged();
-//                dropDown1.setAdapter(adapter1);
-
-
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> adapter) {
-            }
-        });
-
-    }*/
 }

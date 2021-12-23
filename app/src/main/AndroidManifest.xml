@@ -30,6 +30,10 @@
              android:theme="@style/Theme.AppCompat.Light.NoActionBar"></activity>
         <activity android:name=".Info"></activity>
 
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-1610141534649231~5022824482"/>
+
     </application>
 
 </manifest>
